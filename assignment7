@@ -1,0 +1,60 @@
+# Clone the repository, create the composing branch, and move into the project directory
+git clone https://github.com/grabbaking/assignment7.git
+cd assignment7
+git checkout -b composing
+
+# Create the compose.yml file with specified services
+cat <<EOF > compose.yml
+version: '3.8'
+
+services:
+  web:
+    image: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./html:/usr/share/nginx/html
+    command: tail -f /dev/null
+
+  db:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysecretpassword
+      MYSQL_DATABASE: mydatabase
+    volumes:
+      - ./data:/var/lib/mysql
+    command: yes database
+
+  users:
+    image: custom-users-image
+    command: while true; do echo users; done
+EOF
+
+# Create a custom Dockerfile for the users service and build the image
+cat <<EOF > Dockerfile
+FROM alpine
+
+RUN mkdir /structure && \
+    chmod 777 /structure && \
+    touch /structure/sync-work && \
+    touch /structure/nobody-work && \
+    adduser -D -u 5000 collin
+
+USER collin
+
+CMD ["sh", "-c", "while true; do echo users; sleep 1; done"]
+EOF
+
+# Build the custom image for the users service
+docker build -t custom-users-image .
+
+# Test the Compose file
+podman-compose up -d
+
+# Verify the running containers
+podman-compose ps
+
+# Add, commit, and push changes to GitHub
+git add .
+git commit -m "Added compose.yml and custom Dockerfile"
+git push origin composing
